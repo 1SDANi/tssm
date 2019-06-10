@@ -14,7 +14,7 @@ public class camera_controls : MonoBehaviour
 
     public bool lockMouse;
     public bool lockUnlocked;
-    
+
     public float maxDistance;
     public float minDistance;
     public float maxVerticalAngle;
@@ -24,6 +24,8 @@ public class camera_controls : MonoBehaviour
     public Vector3 followOffset;
     public float CameraHeight;
     public float DistanceOffset { get; private set; }
+
+    public Global global;
 
     // Start is called before the first frame update
     void Start()
@@ -78,7 +80,7 @@ public class camera_controls : MonoBehaviour
         if (mouseInput.x != 0)
         {
             // Rotate the camera vertically
-            Camera.main.transform.Rotate(mouseInput.x * verticalMouseSpeed * Time.deltaTime, 0, 0);
+            Camera.main.transform.Rotate(mouseInput.x * verticalMouseSpeed * global.RefreshDelta, 0, 0);
             // Clamp the camera's vertical rotation
             Vector3 cameraRotation = Camera.main.transform.rotation.eulerAngles;
             Camera.main.transform.rotation = Quaternion.Euler(Mathf.Clamp(cameraRotation.x, minVerticalAngle, maxVerticalAngle), cameraRotation.y, cameraRotation.z);
@@ -87,14 +89,16 @@ public class camera_controls : MonoBehaviour
         if (mouseInput.y != 0)
         {
             // Rotate the camera horizontally
-            transform.Rotate(0f, mouseInput.y * Time.deltaTime * horizontalMouseSpeed, 0f);
+            transform.Rotate(0f, mouseInput.y * global.RefreshDelta * horizontalMouseSpeed, 0f);
         }
 
         if (mouseInput.z != 0)
         {
             // Zoom the camera
-            DistanceOffset = Mathf.Clamp(DistanceOffset + mouseInput.z * mouseScrollSpeed * Time.deltaTime, minDistance, maxDistance);
+            DistanceOffset = Mathf.Clamp(DistanceOffset + mouseInput.z * mouseScrollSpeed * global.RefreshDelta, minDistance, maxDistance);
             Camera.main.transform.localPosition = new Vector3(0f, CameraHeight, DistanceOffset);
         }
     }
 }
+
+

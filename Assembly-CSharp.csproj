@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\camera_controls.cs" />
+    <Compile Include="Assets\Global.cs" />
     <Compile Include="Assets\MaterialOffset.cs" />
     <Compile Include="Assets\player_controler_transform.cs" />
     <Compile Include="Assets\player_controller_rigidbody.cs" />

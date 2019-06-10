@@ -8,21 +8,27 @@ public class player_controller_rigidbody : MonoBehaviour
     public string moveX = "Horizontal";
 
     public Vector3 velocity;
-    
+
+    public float turningSpeedModifier;
     public float targetMoveSpeed = 10;
     public float friction = 0.9f;
     public float MoveSpeed { get; private set; }
     public bool Grounded { get; private set; }
 
+    public Vector3 facing { get; private set; }
+    public Vector3 siding { get; private set; }
+
     public float Speed;
 
     private Rigidbody rb;
+
+    public Global global;
 
     private void Start()
 	{
 		rb = GetComponent<Rigidbody>();
         velocity = Vector3.zero;
-        Grounded = false;
+        Grounded = true;
 	}
 
     // Update is called once per frame
@@ -42,8 +48,8 @@ public class player_controller_rigidbody : MonoBehaviour
         }
         
         // Get direction of camera
-        Vector3 facing = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
-        Vector3 siding = Vector3.Cross(facing, Vector3.up);
+        facing = Vector3.ProjectOnPlane(Camera.main.transform.forward, Vector3.up).normalized;
+        siding = Vector3.Cross(facing, Vector3.up);
 
         // Reorient movement input vector relative to camera 
         moveInput = -siding * moveInput.x + facing * moveInput.z;
@@ -69,18 +75,14 @@ public class player_controller_rigidbody : MonoBehaviour
 	
 	private void Move(Vector3 input)
     {
-        // Sync movespeed to Time.deltaTime
-        MoveSpeed = targetMoveSpeed * (1 - friction * Time.deltaTime);
+        // Sync movespeed to global.RefreshDelta
+        MoveSpeed = targetMoveSpeed * (1 - friction * global.RefreshDelta);
         if (Grounded)
         {
             if (input != Vector3.zero)
             {
-                // Movement speed is slower the greater the difference is between the movement input vector's magnitude
-                    //  and it's magnitude in the direction of the player's forward facing vector
-                float forwardMagnitude = Mathf.Max(Vector3.Dot(transform.forward, input) / input.magnitude, 0);
-
                 // Add movement to velocity
-                velocity += transform.forward.normalized * MoveSpeed * Mathf.Min(forwardMagnitude, 1);
+                velocity += transform.forward.normalized * MoveSpeed;
             }
 
             // Stop if moving incredibly slowly
@@ -91,22 +93,11 @@ public class player_controller_rigidbody : MonoBehaviour
             else
             {
                 // Apply friction
-                velocity *= friction * Time.deltaTime;
-
-                // Apply extra friction if the movement vector is pointing behind the player.
-                // Friction is greater the greater the smaller the difference is between the movement input vector's magnitude
-                    // and the magnitude of the player's forward facing vector
-                if (Mathf.Abs(Vector3.Angle(transform.forward, input)) > 90)
-                {
-                    velocity *= friction * Time.deltaTime * Mathf.Max(Vector3.Dot(-transform.forward, input) / input.magnitude, 0);
-                }
+                velocity *= friction * global.RefreshDelta;
             }
         }
 	}
-
-    // Because we use Slerp, it's faster to turn 90 degrees with a 135 degree Right-Down input
-        // turn than turning 90 degrees with a 90 degree Right input.
-        // This creates a tradeoff between turning speed and friction magnitude. 
+    
     private void Turn(Vector3 input)
     {
         if (input != Vector3.zero)
@@ -114,13 +105,13 @@ public class player_controller_rigidbody : MonoBehaviour
             Vector3 target;
             if (Vector3.Angle(transform.forward, input) == 180)
             {
-                // Turn right 179 degrees if the angle between the forward facing vector and the movement input vector is 180 degrees
-                target = Vector3.Slerp(transform.forward, Vector3.Slerp(input, transform.right, 0.005f), Time.deltaTime);
+                // Turn right if the angle between the forward facing vector and the movement input vector is 180 degrees
+                target = Vector3.Lerp(transform.forward, transform.right, global.RefreshDelta * turningSpeedModifier);
             }
             else
             { 
                 // Turn towards the movement input vector.
-                target = Vector3.Slerp(transform.forward, input, Time.deltaTime);
+                target = Vector3.Lerp(transform.forward, input, global.RefreshDelta * turningSpeedModifier);
             }
             Quaternion look = Quaternion.LookRotation(target, Vector3.up);
 
